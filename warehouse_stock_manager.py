@@ -22,6 +22,7 @@ _OPS = {
 }
 _NUM = (int, float)
 
+
 def safe_eval(formula, current):
     """Evaluate simple arithmetic using only numbers and 'current'."""
 
@@ -41,6 +42,7 @@ def safe_eval(formula, current):
     except (SyntaxError, ZeroDivisionError) as err:
         raise ValueError(f"Invalid formula: {formula!r}") from err
 
+
 def _is_authorized(password):
     """Compare password with the SUPERVISOR_PASSWORD env variable."""
     expected = os.environ.get("SUPERVISOR_PASSWORD")
@@ -49,6 +51,7 @@ def _is_authorized(password):
     return hmac.compare_digest(
         str(password).encode("utf-8"), expected.encode("utf-8")
     )
+
 
 def add_stock(sku, qty, history=None):
     """Receive qty units of sku. Rejects invalid SKUs and quantities."""
@@ -62,25 +65,31 @@ def add_stock(sku, qty, history=None):
     history.append(f"{datetime.now()}: Received {qty} units of {sku}")
     return history
 
+
 def remove_stock(sku, qty):
     """Issue qty units of sku. Rejects unknown SKUs and oversell."""
     if sku not in WAREHOUSE_STOCK:
         raise ValueError(f"Unknown SKU: {sku!r}")
     on_hand = WAREHOUSE_STOCK[sku]
     if qty <= 0 or qty > on_hand:
-        raise ValueError(f"Cannot remove {qty} of {sku}; only {on_hand} in stock")
+        raise ValueError(
+            f"Cannot remove {qty} of {sku}; only {on_hand} in stock"
+        )
     WAREHOUSE_STOCK[sku] = on_hand - qty
     if WAREHOUSE_STOCK[sku] == 0:
         del WAREHOUSE_STOCK[sku]
+
 
 def get_stock(sku):
     """Return the stock level for sku."""
     return WAREHOUSE_STOCK[sku]
 
+
 def sku_checksum(sku):
     """Short fingerprint used on printed bin labels (not for security)."""
     digest = hashlib.md5(sku.encode("utf-8"), usedforsecurity=False)
     return digest.hexdigest()[:6]
+
 
 def load_stock(path="warehouse.json"):
     """Load stock levels from a JSON file."""
@@ -89,10 +98,12 @@ def load_stock(path="warehouse.json"):
     WAREHOUSE_STOCK.clear()
     WAREHOUSE_STOCK.update(data)
 
+
 def save_stock(path="warehouse.json"):
     """Save stock levels to a JSON file."""
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(WAREHOUSE_STOCK, handle)
+
 
 def print_report():
     """Print every SKU with its quantity and label checksum."""
@@ -100,9 +111,11 @@ def print_report():
     for sku, qty in WAREHOUSE_STOCK.items():
         print(f"{sku} -> {qty} units [chk: {sku_checksum(sku)}]")
 
+
 def check_reorder(threshold=10):
     """Return the SKUs whose stock is below threshold."""
     return [sku for sku, qty in WAREHOUSE_STOCK.items() if qty < threshold]
+
 
 def apply_adjustment(sku, formula, password):
     """Set a SKU's quantity from a supervisor formula."""
@@ -120,9 +133,12 @@ def apply_adjustment(sku, formula, password):
         )
     return True
 
+
 def main():
     """Run a short demonstration of the stock manager."""
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(levelname)s: %(message)s"
+    )
     history = []
     add_stock("WID-001", 40, history)
     add_stock("WID-002", 4, history)
@@ -148,6 +164,7 @@ def main():
     load_stock()
     print_report()
     print("stock audit complete")
+
 
 if __name__ == "__main__":
     main()

@@ -1,3 +1,5 @@
+#PES2UG24CS058
+
 """Warehouse stock manager: receive, issue, report and adjust stock."""
 
 import ast
